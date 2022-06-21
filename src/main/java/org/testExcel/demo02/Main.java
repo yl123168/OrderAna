@@ -26,7 +26,6 @@ public class Main {
         XSSFSheet sheet = workbook.getSheetAt(0);
         //将Excel的订单数据转成客户对象列表
         extractExcelToCustomList(customs, sheet);
-
         //制作订单对象列表
         ArrayList<Order> orderList = new ArrayList<>();
         outputOrderList(customs, orderList);
@@ -64,31 +63,57 @@ public class Main {
             Cell cell0 = row.getCell(0);
             //将这个公司名录入公司名列表，并跳过重复值，录入到Custom列表
             String corpName = cell0.toString();
+            //将这一行的订单数据创建一个Order对象
             Order order = new Order(row.getCell(2).toString(), row.getCell(4).toString(), row.getCell(5).getDateCellValue(), row.getCell(8).toString(),
                     (int) row.getCell(9).getNumericCellValue(), Integer.parseInt(row.getCell(10).getRawValue()), (row.getCell(12).getRawValue()));
 
-            //如果这个订单的客户不在客户表，则添加客户并且添加订单
-            if (!corpNameList.contains(corpName)) {
-                corpNameList.add(corpName);
-                String domain = row.getCell(1).toString();
-                int corpId = (int) row.getCell(3).getNumericCellValue();
-                customs.add(new Custom(corpName, domain, corpId, order));
-            } else {
-                //找到该客户，并且添加订单
-                for (int i = 0; i < customs.size(); i++) {
-                    Custom custom = customs.get(i);
-                    //遍历找到了该订单
-                    if (custom.getCorpName() == corpName) {
-                        ArrayList<Order> orderList = custom.getOrderList();
-                        for (Order order1 : orderList) {
-                            //如果是不同的订单号并且间隔天数大于3天
-                            if (isExtensionOrder(order, order1)) {
-                                order.setOrderType(1);
-                                //确认这个订单是增购订单
-                            }
-                            custom.getOrderList().add(order);
-                            break;
+            //如果这个订单的客户不在客户表，则添加客户并且添加客户的第一个订单
+            //addOrderInCustom(customs, corpNameList, row, corpName, order);
+            addOrderInCustomNew(customs, corpNameList, row, corpName, order);
+
+        }
+    }
+
+    private static void addOrderInCustomNew(ArrayList<Custom> customs, ArrayList<String> corpNameList, XSSFRow row, String corpName, Order order) {
+        //遍历客户表，如果客户表里面有这个客户，则添加在这个客户对象内添加值，便利结束没有，则新增在客户表内新增该客户，并添加该订单
+        for (int i = 0; i < customs.size(); i++) {
+            Custom custom = customs.get(i);
+            if (custom.getCorpName() == corpName) {
+                ArrayList<Order> orderList = custom.getOrderList();
+                for (Order order1 : orderList) {
+                    //如果是不同的订单号并且间隔天数大于3天
+                    if (isExtensionOrder(order, order1)) {
+                        order.setOrderType(1);
+                        //确认这个订单是增购订单
+                    }
+                    custom.getOrderList().add(order);
+                }
+            }
+        }
+    }
+
+
+    private static void addOrderInCustom(ArrayList<Custom> customs, ArrayList<String> corpNameList, XSSFRow row, String corpName, Order order) {
+        if (!corpNameList.contains(corpName)) {
+            corpNameList.add(corpName);
+            String domain = row.getCell(1).toString();
+            int corpId = (int) row.getCell(3).getNumericCellValue();
+            customs.add(new Custom(corpName, domain, corpId, order));
+        } else {
+            //找到该客户，并且添加订单，需要给订单排序
+            for (int i = 0; i < customs.size(); i++) {
+                Custom custom = customs.get(i);
+                //遍历找到了该客户
+                if (custom.getCorpName() == corpName) {
+                    ArrayList<Order> orderList = custom.getOrderList();
+                    for (Order order1 : orderList) {
+                        //如果是不同的订单号并且间隔天数大于3天
+                        if (isExtensionOrder(order, order1)) {
+                            order.setOrderType(1);
+                            //确认这个订单是增购订单
                         }
+                        custom.getOrderList().add(order);
+                        break;
                     }
                 }
             }
