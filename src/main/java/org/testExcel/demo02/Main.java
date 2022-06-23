@@ -39,11 +39,11 @@ public class Main {
     /**
      * 将客户列表中的订单，梳理成订单对象列表
      *
-     * @param customs
+     * @param customsList
      * @param orderList
      */
-    private static void exOrderList(ArrayList<Custom> customs, ArrayList<Order> orderList) {
-        for (Custom ct1 : customs) {
+    private static void exOrderList(ArrayList<Custom> customsList, ArrayList<Order> orderList) {
+        for (Custom ct1 : customsList) {
             ArrayList<Order> orderL1 = ct1.getOrderList();
             for (Order order : orderL1) {
                 order.setCorpId(ct1.getCorpId());
@@ -54,7 +54,7 @@ public class Main {
         }
     }
 
-    private static void extractExcelToCustomList(ArrayList<Custom> customs, XSSFSheet sheet) {
+    private static void extractExcelToCustomList(ArrayList<Custom> customsList, XSSFSheet sheet) {
         ArrayList<String> corpNameList = new ArrayList<>();
         //每一行循环获取每行第一个cell的值（客户名称）
         for (int j = 1; j < sheet.getLastRowNum(); j++) {
@@ -67,32 +67,10 @@ public class Main {
             //将这一行的订单数据创建一个Order对象
             Order order = new Order(row.getCell(2).toString(), row.getCell(4).toString(), row.getCell(5).getDateCellValue(), row.getCell(8).toString(),
                     (int) row.getCell(9).getNumericCellValue(), Integer.parseInt(row.getCell(10).getRawValue()), (row.getCell(12).getRawValue()));
-
-            //如果这个订单的客户不在客户表，则添加客户并且添加客户的第一个订单
-            //addOrderInCustom(customs, corpNameList, row, corpName, order);
-            addOrderInCustomNew(customs, corpNameList, row, corpName, order);
-
+            //把订单导入进客户列表内
+            addOrderInCustom(customsList, corpNameList, row, corpName, order);
         }
     }
-
-    private static void addOrderInCustomNew(ArrayList<Custom> customs, ArrayList<String> corpNameList, XSSFRow row, String corpName, Order order) {
-        //遍历客户表，如果客户表里面有这个客户，则添加在这个客户对象内添加值，便利结束没有，则新增在客户表内新增该客户，并添加该订单
-        for (int i = 0; i < customs.size(); i++) {
-            Custom custom = customs.get(i);
-            if (custom.getCorpName() == corpName) {
-                ArrayList<Order> orderList = custom.getOrderList();
-                for (Order order1 : orderList) {
-                    //如果是不同的订单号并且间隔天数大于3天
-                    if (isExtensionOrder(order, order1)) {
-                        order.setOrderType(1);
-                        //确认这个订单是增购订单
-                    }
-                    custom.getOrderList().add(order);
-                }
-            }
-        }
-    }
-
 
     private static void addOrderInCustom(ArrayList<Custom> customs, ArrayList<String> corpNameList, XSSFRow row, String corpName, Order order) {
         if (!corpNameList.contains(corpName)) {
