@@ -1,6 +1,7 @@
 package org.testExcel.demo02;
 
 import java.util.ArrayList;
+import java.util.Date;
 
 public class Custom {
     String corpName;
@@ -8,12 +9,14 @@ public class Custom {
     int corpId;
     ArrayList<Order> orderList = new ArrayList<>();
 
+
     public Custom(String corpName, String domain, int corpId, Order order) {
         this.corpName = corpName;
         this.domain = domain;
         this.corpId = corpId;
         this.orderList.add(order);
     }
+
 
     public Custom(String corpName, String domain, int corpId, ArrayList<Order> orderList) {
         this.corpName = corpName;

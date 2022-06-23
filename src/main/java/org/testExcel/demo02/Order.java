@@ -16,6 +16,8 @@ public class Order {
     String domain;
     int CorpId;
 
+
+
     public int getOrderType() {
         return orderType;
     }

@@ -1,6 +1,7 @@
 package org.testExcel.demo02;
 
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -17,7 +18,7 @@ public class Main {
     public static void main(String[] args) throws IOException {
         // 订单包含订单号，企业订单号，付款时间，产品类型，产品数量，购买月份，订单总价，订单客户名，订单客户序号，订单客户域名
         //客户包含：公司名、域名、企业序号、订单列表
-        ArrayList<Custom> customs = new ArrayList<>();
+        ArrayList<Custom> customsList = new ArrayList<>();
         //给到一个有数的表，能够输出一个客户列表
         FileInputStream sourceExcel = new FileInputStream("D:\\叶磊网易\\数据分析\\daima\\test\\order_name.xlsx");
         //导出增购订单表位置
@@ -25,10 +26,10 @@ public class Main {
         XSSFWorkbook workbook = new XSSFWorkbook(sourceExcel);
         XSSFSheet sheet = workbook.getSheetAt(0);
         //将Excel的订单数据转成客户对象列表
-        extractExcelToCustomList(customs, sheet);
+        extractExcelToCustomList(customsList, sheet);
         //制作订单对象列表
         ArrayList<Order> orderList = new ArrayList<>();
-        outputOrderList(customs, orderList);
+        exOrderList(customsList, orderList);
         //输出订单表格
         outputExOrderExcel(outPath, orderList);
         //关闭流
@@ -41,7 +42,7 @@ public class Main {
      * @param customs
      * @param orderList
      */
-    private static void outputOrderList(ArrayList<Custom> customs, ArrayList<Order> orderList) {
+    private static void exOrderList(ArrayList<Custom> customs, ArrayList<Order> orderList) {
         for (Custom ct1 : customs) {
             ArrayList<Order> orderL1 = ct1.getOrderList();
             for (Order order : orderL1) {
@@ -98,6 +99,7 @@ public class Main {
             corpNameList.add(corpName);
             String domain = row.getCell(1).toString();
             int corpId = (int) row.getCell(3).getNumericCellValue();
+            Date firstOrderDate = row.getCell(5).getDateCellValue();
             customs.add(new Custom(corpName, domain, corpId, order));
         } else {
             //找到该客户，并且添加订单，需要给订单排序
