@@ -1,7 +1,6 @@
 package org.testExcel.demo02;
 
 import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -15,6 +14,10 @@ import java.util.Date;
 import static java.lang.Math.abs;
 
 public class Main {
+    public final static int exPayDaysDiff = 3;
+    public final static String crmProductType = "外贸通";
+    public final static String edmProductType="邮件营销";
+
     public static void main(String[] args) throws IOException {
         // 订单包含订单号，企业订单号，付款时间，产品类型，产品数量，购买月份，订单总价，订单客户名，订单客户序号，订单客户域名
         //客户包含：公司名、域名、企业序号、订单列表
@@ -63,41 +66,120 @@ public class Main {
             //获取行第一个单元格
             Cell cell0 = row.getCell(0);
             //将这个公司名录入公司名列表，并跳过重复值，录入到Custom列表
-            String corpName = cell0.toString();
+            String corpName = cell0.getStringCellValue();
             //将这一行的订单数据创建一个Order对象
-            Order order = new Order(row.getCell(2).toString(), row.getCell(4).toString(), row.getCell(5).getDateCellValue(), row.getCell(8).toString(),
-                    (int) row.getCell(9).getNumericCellValue(), Integer.parseInt(row.getCell(10).getRawValue()), (row.getCell(12).getRawValue()));
+            Order order = new Order(row.getCell(2).toString(),
+                    row.getCell(4).toString(),
+                    row.getCell(5).getDateCellValue(),
+                    row.getCell(8).toString(),
+                    Integer.parseInt(row.getCell(9).getStringCellValue()),
+                    Integer.parseInt(row.getCell(10).getRawValue()),
+                    row.getCell(12).getRawValue(),
+                    row.getCell(1).getStringCellValue(), cell0.getStringCellValue(),
+                    Integer.parseInt(row.getCell(3).getStringCellValue()));
             //把订单导入进客户列表内
             addOrderInCustom(customsList, corpNameList, row, corpName, order);
         }
     }
 
-    private static void addOrderInCustom(ArrayList<Custom> customs, ArrayList<String> corpNameList, XSSFRow row, String corpName, Order order) {
+    /**
+     * @param customs
+     * @param corpNameList
+     * @param row
+     * @param corpName
+     * @param order
+     */
+    private static void addOrderInCustom(ArrayList<Custom> customs,
+                                         ArrayList<String> corpNameList,
+                                         XSSFRow row, String corpName, Order order) {
+        Date orderPaytime = order.getPaytime();
+        //如果订单中的客户名，不在客户名单内
         if (!corpNameList.contains(corpName)) {
+            // 那么就加入客户名单
             corpNameList.add(corpName);
-            String domain = row.getCell(1).toString();
-            int corpId = (int) row.getCell(3).getNumericCellValue();
-            Date firstOrderDate = row.getCell(5).getDateCellValue();
-            customs.add(new Custom(corpName, domain, corpId, order));
+            String domain = order.getDomain();
+            int corpId = order.getCorpId();
+            Date firstOrderDate = orderPaytime;
+            // 并且生成一个客户添加到客户对象表// 添加该订单到客户对象表内的订单对象表
+            customs.add(new Custom(corpName, domain, corpId, firstOrderDate, order));
         } else {
-            //找到该客户，并且添加订单，需要给订单排序
+            //找到该客户，并且添加订单，需要给订单标记
             for (int i = 0; i < customs.size(); i++) {
                 Custom custom = customs.get(i);
-                //遍历找到了该客户
-                if (custom.getCorpName() == corpName) {
+                //遍历找到该客户,公司名一致
+                if (custom.getCorpName().equals(corpName)) {
+                    //得到该客户custom，需要和之前的订单做比对
                     ArrayList<Order> orderList = custom.getOrderList();
-                    for (Order order1 : orderList) {
-                        //如果是不同的订单号并且间隔天数大于3天
-                        if (isExtensionOrder(order, order1)) {
-                            order.setOrderType(1);
-                            //确认这个订单是增购订单
-                        }
-                        custom.getOrderList().add(order);
-                        break;
+                    //客户第一笔订单时间，新订单的付款时间
+                    Date ctFirstOrderDate = custom.getFirstOrderDate();
+                    Date orderPayDate = order.getPaytime();
+                    //先比较这个订单的时间，和客户首次付款时间，在3天内的订单，就直接添加到订单列表，不需要标记
+                    if (dateDiffDays(ctFirstOrderDate, orderPayDate) < exPayDaysDiff + 1) {
+                        orderList.add(order);
+                    } else {
+                        //和客户首次付款时间超过3天，order则为增购，并且需要标记增购的类型
+                        ordTypeTag(order, orderList, orderPayDate);
+                        orderList.add(order);
                     }
                 }
             }
         }
+    }
+    private static void ordTypeTag(Order order, ArrayList<Order> orderList, Date orderPayDate) {
+        switch (order.getProductType()) {
+            case crmProductType:
+                for (Order oldOrder : orderList) {
+                    if (dateDiffDays(oldOrder.getPaytime(), orderPayDate) == 0) {
+                        //新订单和之前的所有老订单比对，如果发现和老订单是同一天的，则需要标记新老订单
+                        //如果这个老订单是”外贸通“，则标记为exCRM
+                        if (oldOrder.getProductType().equals(crmProductType)) {
+                            order.setOrderType("exCRM");
+                        } else if (oldOrder.getProductType().equals(edmProductType)) {
+                            //如果是”邮件营销“，标记为exAll
+                            order.setOrderType("exAll");
+                            if (oldOrder.getOrderType() == null | oldOrder.getOrderType().equals("exEDM") | oldOrder.getOrderType().equals("exAll")) {
+                                //如果邮件营销还是exEDM或是null或者是exall，则修改为exAll。
+                                oldOrder.setOrderType("exAll");
+                            }
+                        }
+                        //每个老订单都要对比一下
+                        continue;
+                    }
+                    //没有找到订单列表内3天内的订单，就直接标记exCRM
+                    order.setOrderType("exCRM");
+                }
+                break;
+            //订单的类型是”邮件营销“
+            case edmProductType:
+                for (Order oldOrder : orderList) {
+                    //如果找到超过3天的订单
+                    if (dateDiffDays(oldOrder.getPaytime(), orderPayDate) == 0) {
+
+                        if (oldOrder.getProductType().equals(edmProductType)) {
+                            //如果这个老订单是”邮件营销“，则标记为exEDM
+                            order.setOrderType("exEDM");
+                        } else if (oldOrder.getProductType().equals(crmProductType)) {
+                            //如果劳动是”外贸通“，标记为exAll
+                            order.setOrderType("exAll");
+                            if (oldOrder.getOrderType() == null | oldOrder.getOrderType().equals("exCRM")) {
+                                // 如果外贸通该还是exCRM或是null，则修改为exAll。
+                                oldOrder.setOrderType("exAll");
+                            }
+                        }
+                        continue;
+                    }
+                    // 而且没有找到订单列表内3天内的订单，就直接标记exEDM
+                    order.setOrderType("exEDM");
+                }
+                break;
+            default:
+                order.setOrderType("ex");
+                break;
+        }
+    }
+
+    private static int dateDiffDays(Date date01, Date date02) {
+        return abs((int) ((date01.getTime() - date02.getTime()) / (1000 * 3600 * 24)));
     }
 
     /**

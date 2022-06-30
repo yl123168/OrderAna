@@ -7,8 +7,23 @@ public class Custom {
     String corpName;
     String domain;
     int corpId;
+    Date firstOrderDate;
     ArrayList<Order> orderList = new ArrayList<>();
 
+    public Custom(String corpName, String domain, int corpId, Date firstOrderDate) {
+        this.corpName = corpName;
+        this.domain = domain;
+        this.corpId = corpId;
+        this.firstOrderDate = firstOrderDate;
+    }
+
+    public Custom(String corpName, String domain, int corpId, Date firstOrderDate,Order order) {
+        this.corpName = corpName;
+        this.domain = domain;
+        this.corpId = corpId;
+        this.firstOrderDate = firstOrderDate;
+        this.orderList.add(order);
+    }
 
     public Custom(String corpName, String domain, int corpId, Order order) {
         this.corpName = corpName;
@@ -17,6 +32,13 @@ public class Custom {
         this.orderList.add(order);
     }
 
+    public Date getFirstOrderDate() {
+        return firstOrderDate;
+    }
+
+    public void setFirstOrderDate(Date firstOrderDate) {
+        this.firstOrderDate = firstOrderDate;
+    }
 
     public Custom(String corpName, String domain, int corpId, ArrayList<Order> orderList) {
         this.corpName = corpName;
