@@ -1,0 +1,10 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="exorderAna">
+    <output-path>D:/叶磊网易/数据分析/订单数据/增购订单分析</output-path>
+    <root id="archive" name="exorderAna.jar">
+      <element id="directory" name="META-INF">
+        <element id="file-copy" path="$PROJECT_DIR$/META-INF/MANIFEST.MF" />
+      </element>
+    </root>
+  </artifact>
+</component>
