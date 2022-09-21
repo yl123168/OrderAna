@@ -8,7 +8,25 @@ public class Custom {
     String domain;
     int corpId;
     Date firstOrderDate;
+    int crmAcountNum;
+    int edmNum;
     ArrayList<Order> orderList = new ArrayList<>();
+
+    public int getCrmAcountNum() {
+        return crmAcountNum;
+    }
+
+    public void setCrmAcountNum(int crmAcountNum) {
+        this.crmAcountNum = crmAcountNum;
+    }
+
+    public int getEdmNum() {
+        return edmNum;
+    }
+
+    public void setEdmNum(int edmNum) {
+        this.edmNum = edmNum;
+    }
 
     public Custom(String corpName, String domain, int corpId, Date firstOrderDate) {
         this.corpName = corpName;

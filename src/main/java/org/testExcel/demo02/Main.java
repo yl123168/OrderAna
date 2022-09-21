@@ -32,6 +32,7 @@ public class Main {
         String sourceExlPath = "D:\\叶磊网易\\数据分析\\订单数据\\增购订单分析\\orderList.xlsx";
         //导出增购订单表位置
         String outExlPath = "D:\\叶磊网易\\数据分析\\订单数据\\增购订单分析\\exOrder.xlsx";
+        String outCustomExlPath = "D:\\叶磊网易\\数据分析\\订单数据\\增购订单分析\\customList.xlsx";
         //给到一个有数的表，能够输出一个客户列表
         FileInputStream sourceExcel = new FileInputStream(sourceExlPath);
         XSSFWorkbook workbook = new XSSFWorkbook(sourceExcel);
@@ -43,9 +44,44 @@ public class Main {
         exOrderList(customsList, orderList);
         //输出订单表格
         outputExOrderExcel(outExlPath, orderList);
+        //输出客户台账(客户域名、公司名、序号、首次购买时间、购买外贸通数量，购买邮件营销数量)
+        outputExCustomExcel(customsList, outCustomExlPath);
         //关闭流
         sourceExcel.close();
     }
+
+    private static void outputExCustomExcel(ArrayList<Custom> customsList, String outPath) throws IOException {
+        customListInit(customsList);
+        XSSFWorkbook workbook = new XSSFWorkbook();
+        XSSFSheet sheet = workbook.createSheet();
+        for (int i = 0; i < customsList.size(); i++) {
+            XSSFRow row = sheet.createRow(i);
+            Custom custom = customsList.get(i);
+            row.createCell(0).setCellValue(custom.getDomain());
+            row.createCell(1).setCellValue(custom.getCorpName());
+            row.createCell(2).setCellValue(custom.getCorpId());
+            row.createCell(3).setCellValue(custom.getFirstOrderDate());
+            row.createCell(4).setCellValue(custom.getCrmAcountNum());
+            row.createCell(5).setCellValue(custom.getEdmNum());
+        }
+        FileOutputStream fileOutputStream = new FileOutputStream(outPath);
+        workbook.write(fileOutputStream);
+        fileOutputStream.close();
+    }
+
+    private static void customListInit(ArrayList<Custom> customList) {
+        for (Custom custom : customList) {
+            ArrayList<Order> orderList = custom.getOrderList();
+            for (Order order : orderList) {
+                if (order.getProductType().equals(crmProductType)) {
+                    custom.setCrmAcountNum(custom.getCrmAcountNum() + order.getSkuNumber());
+                } else if (order.getProductType().equals(edmProductType)) {
+                    custom.setEdmNum(custom.getEdmNum() + order.getSkuNumber());
+                }
+            }
+        }
+    }
+
 
     /**
      * 将客户列表中的订单，梳理成订单对象列表
@@ -113,6 +149,7 @@ public class Main {
             Cell cell0 = row.getCell(indexOfcorpName);
             //将这个公司名录入公司名列表，并跳过重复值，录入到Custom列表
             String corpName = cell0.getStringCellValue();
+            System.out.println(corpName);
             //将这一行的订单数据创建一个Order对象
             Order order = new Order(row.getCell(indexOfOdNumber).getStringCellValue(),
                     row.getCell(indexOfOdCorpNumber).getStringCellValue(),
@@ -123,7 +160,8 @@ public class Main {
                     row.getCell(indexOfOdPrice).getRawValue(),
                     row.getCell(indexOfDomainName).getStringCellValue(),
                     row.getCell(indexOfcorpName).getStringCellValue(),
-                    Integer.parseInt(row.getCell(indexOfcorpID).getStringCellValue()));;
+                    Integer.parseInt(row.getCell(indexOfcorpID).getStringCellValue()));
+            ;
             //把订单导入进客户列表内
             addOrderInCustom(customsList, corpNameList, row, corpName, order);
         }
