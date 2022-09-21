@@ -8,10 +8,8 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.SyncFailedException;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Scanner;
 
 import static java.lang.Math.abs;
 
@@ -82,7 +80,6 @@ public class Main {
         }
     }
 
-
     /**
      * 将客户列表中的订单，梳理成订单对象列表
      *
@@ -145,11 +142,11 @@ public class Main {
         for (int j = 1; j < sheet.getLastRowNum() + 1; j++) {
             //获取行
             XSSFRow row = sheet.getRow(j);
-            //获取行第一个单元格
+            //获取公司名所在单元格
             Cell cell0 = row.getCell(indexOfcorpName);
             //将这个公司名录入公司名列表，并跳过重复值，录入到Custom列表
             String corpName = cell0.getStringCellValue();
-            System.out.println(corpName);
+
             //将这一行的订单数据创建一个Order对象
             Order order = new Order(row.getCell(indexOfOdNumber).getStringCellValue(),
                     row.getCell(indexOfOdCorpNumber).getStringCellValue(),
@@ -163,23 +160,77 @@ public class Main {
                     Integer.parseInt(row.getCell(indexOfcorpID).getStringCellValue()));
             ;
             //把订单导入进客户列表内
-            addOrderInCustom(customsList, corpNameList, row, corpName, order);
+            addOrderInCustom(customsList, order);
         }
     }
 
-    /**
-     * @param customs
-     * @param corpNameList
-     * @param row
+    /**判断是不是新客户，新的订单内包含的信息，和之前的客户是不是同一个
+     *
+     * @return
+     */
+    private static boolean isNewCustom(String corpName, int corpId, String domain, ArrayList<Custom> customs) {
+        //遍历之前的客户对象表，如果是其中一个客户的信息，那么就是老客户，否则就是新客户
+        for (Custom custom:customs) {
+            if(isSameCustom(corpName,corpId, domain,custom)){
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**判断客户是不是一个，不同的企业ID，不同的公司名，不同的域名
+     *
      * @param corpName
+     * @param corpId
+     * @param domain
+     * @param custom
+     * @return
+     */
+    private static boolean isSameCustom(String corpName, int corpId, String domain, Custom custom) {
+        if(custom.getDomain().equals(domain) |custom.getCorpName().equals(corpName) | custom.getCorpId() == corpId){
+            return true;
+        }else {
+            return false;
+        }
+    }
+
+    /**把订单对象，添加到Custom对象列表，如果是新客户，直接添加一个新的客户对象，如果订单是老客户，把订单对象添加到老客户订单列表
+     * @param customs
      * @param order
      */
-    private static void addOrderInCustom(ArrayList<Custom> customs,
-                                         ArrayList<String> corpNameList,
-                                         XSSFRow row, String corpName, Order order) {
+    private static void addOrderInCustom(ArrayList<Custom> customs, Order order) {
         Date orderPaytime = order.getPaytime();
-        //如果订单中的客户名，不在客户名单内
-        if (!corpNameList.contains(corpName)) {
+
+        String corpName = order.getCorpName();
+        int corpId = order.getCorpId();
+        String domain = order.getDomain();
+
+        //新客户加入名单，老客户要把订单加入老客户内的订单表
+        if (isNewCustom(corpName, corpId,domain,customs)) {
+            Date firstOrderDate = orderPaytime;
+            // 并且生成一个客户添加到客户对象表// 添加该订单到客户对象表内的订单对象表
+            customs.add(new Custom(corpName, domain, corpId, firstOrderDate, order));
+        } else {
+            for (int i = 0; i < customs.size(); i++) {
+                Custom custom = customs.get(i);
+                //找到同一个客户,公司名一致
+                if (isSameCustom(corpName,corpId,domain,custom)) {
+                    //得到该客户custom，需要和之前的订单做比对
+                    ArrayList<Order> orderList = custom.getOrderList();
+                    //客户第一笔订单时间，新订单的付款时间
+                    Date ctFirstOrderDate = custom.getFirstOrderDate();
+                    Date orderPayDate = order.getPaytime();
+                    //先比较这个订单的时间，和客户首次付款时间，在3天内的订单，就直接添加到订单列表，不需要标记
+                    if (dateDiffDays(ctFirstOrderDate, orderPayDate) < exPayDaysDiff + 1) {
+                        orderList.add(order);
+                    } else {
+                        //和客户首次付款时间超过3天，order则为增购，并且需要标记增购的类型
+                        ordTypeTag(order, orderList, orderPayDate);
+                        orderList.add(order);
+                    }
+                }
+            }
+        /*if (!corpNameList.contains(corpName)) {
             // 那么就加入客户名单
             corpNameList.add(corpName);
             String domain = order.getDomain();
@@ -207,10 +258,16 @@ public class Main {
                         orderList.add(order);
                     }
                 }
-            }
+            }*/
         }
     }
 
+    /**订单增购类型判断，是单独增购外贸通、邮件营销，还是增购B+C
+     *
+     * @param order
+     * @param orderList
+     * @param orderPayDate
+     */
     private static void ordTypeTag(Order order, ArrayList<Order> orderList, Date orderPayDate) {
         switch (order.getProductType()) {
             case crmProductType:
@@ -273,7 +330,7 @@ public class Main {
     }
 
     /**
-     * 判断订单是否是增购的订单类型，如果是，则标记为1
+     * 判断订单是否是增购的订单类型
      *
      * @param order1
      * @param order2
@@ -321,28 +378,4 @@ public class Main {
         workbook.write(fileOutputStream);
         fileOutputStream.close();
     }
-
-    //按照客户维度，每行客户关联其订单,暂时用不到
-    /*private static void OutputExcel(String outPath, ArrayList<Custom> customs) throws IOException {
-        XSSFWorkbook workbook = new XSSFWorkbook();
-        XSSFSheet sheet = workbook.createSheet();
-        for (int i = 0; i < customs.size(); i++) {
-            XSSFRow row = sheet.createRow(i);
-            Custom custom = customs.get(i);
-            row.createCell(0).setCellValue(custom.getCorpName());
-            row.createCell(1).setCellValue(custom.getCorpId());
-            row.createCell(2).setCellValue(custom.getDomain());
-            ArrayList<Order> orderList = custom.getOrderList();
-            for (int j = 0; j < orderList.size(); j++) {
-                Order order = orderList.get(j);
-                row.createCell(3 + j * 4).setCellValue(order.getProductType());
-                row.createCell(4 + j * 4).setCellValue(order.getPaytime());
-                row.createCell(5 + j * 4).setCellValue(order.getOrderPrice());
-                row.createCell(6 + j * 4).setCellValue(order.getOrderType());
-            }
-        }
-        FileOutputStream fileOutputStream = new FileOutputStream(outPath);
-        workbook.write(fileOutputStream);
-        fileOutputStream.close();
-    }*/
 }
