@@ -126,29 +126,4 @@ public class Order {
         this.corpName = corpName;
         this.corpId = corpId;
     }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Order order = (Order) o;
-        return Objects.equals(orderId, order.orderId);
-    }
-
-    @Override
-    public String toString() {
-        return "Order{" +
-                "orderId='" + orderId + '\'' +
-                ", orderCorpId='" + orderCorpId + '\'' +
-                ", paytime=" + paytime +
-                ", productType='" + productType + '\'' +
-                ", skuNumber=" + skuNumber +
-                ", skuMonth=" + skuMonth +
-                ", orderPrice=" + orderPrice +
-                ", orderType=" + orderType +
-                ", corpName='" + corpName + '\'' +
-                ", domain='" + domain + '\'' +
-                ", CorpId=" + corpId +
-                '}';
-    }
 }

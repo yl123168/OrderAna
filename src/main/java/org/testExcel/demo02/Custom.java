@@ -109,14 +109,4 @@ public class Custom {
     public void setOrderList(ArrayList<Order> orderList) {
         this.orderList = orderList;
     }
-
-    @Override
-    public String toString() {
-        return "Custom{" +
-                "corpName='" + corpName + '\'' +
-                ", domain='" + domain + '\'' +
-                ", corpId=" + corpId +
-                ", orderList=" + orderList +
-                '}';
-    }
 }
