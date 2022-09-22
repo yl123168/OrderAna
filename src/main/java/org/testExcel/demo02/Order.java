@@ -11,16 +11,25 @@ public class Order {
     int skuNumber;
     int skuMonth;
     String orderPrice;
-    int orderType;
+    String orderType;
     String corpName;
     String domain;
-    int CorpId;
+    int corpId;
+    Date firstOrderDate;
 
-    public int getOrderType() {
+    public Date getFirstOrderDate() {
+        return firstOrderDate;
+    }
+
+    public void setFirstOrderDate(Date firstOrderDate) {
+        this.firstOrderDate = firstOrderDate;
+    }
+
+    public String getOrderType() {
         return orderType;
     }
 
-    public void setOrderType(int orderType) {
+    public void setOrderType(String orderType) {
         this.orderType = orderType;
     }
 
@@ -89,11 +98,11 @@ public class Order {
     }
 
     public int getCorpId() {
-        return CorpId;
+        return corpId;
     }
 
     public void setCorpId(int corpId) {
-        CorpId = corpId;
+        this.corpId = corpId;
     }
 
     public String getOrderPrice() {
@@ -104,7 +113,8 @@ public class Order {
         this.orderPrice = orderPrice;
     }
 
-    public Order(String orderId, String orderCorpId, Date paytime, String productType, int skuNumber, int skuMonth, String orderPrice) {
+    public Order(String orderId, String orderCorpId, Date paytime, String productType,
+                 int skuNumber, int skuMonth, String orderPrice, String domain,String corpName,int corpId) {
         this.orderId = orderId;
         this.orderCorpId = orderCorpId;
         this.paytime = paytime;
@@ -112,17 +122,9 @@ public class Order {
         this.skuNumber = skuNumber;
         this.skuMonth = skuMonth;
         this.orderPrice = orderPrice;
-    }
-
-    public Order(String orderId, String orderCorpId, Date paytime, String productType, int skuNumber, int skuMonth, String orderPrice, int orderType) {
-        this.orderId = orderId;
-        this.orderCorpId = orderCorpId;
-        this.paytime = paytime;
-        this.productType = productType;
-        this.skuNumber = skuNumber;
-        this.skuMonth = skuMonth;
-        this.orderPrice = orderPrice;
-        this.orderType = orderType;
+        this.domain = domain;
+        this.corpName = corpName;
+        this.corpId = corpId;
     }
 
     @Override
@@ -146,7 +148,7 @@ public class Order {
                 ", orderType=" + orderType +
                 ", corpName='" + corpName + '\'' +
                 ", domain='" + domain + '\'' +
-                ", CorpId=" + CorpId +
+                ", CorpId=" + corpId +
                 '}';
     }
 }

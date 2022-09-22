@@ -1,18 +1,61 @@
 package org.testExcel.demo02;
 
 import java.util.ArrayList;
+import java.util.Date;
 
 public class Custom {
     String corpName;
     String domain;
     int corpId;
+    Date firstOrderDate;
+    int crmAcountNum;
+    int edmNum;
     ArrayList<Order> orderList = new ArrayList<>();
+
+    public int getCrmAcountNum() {
+        return crmAcountNum;
+    }
+
+    public void setCrmAcountNum(int crmAcountNum) {
+        this.crmAcountNum = crmAcountNum;
+    }
+
+    public int getEdmNum() {
+        return edmNum;
+    }
+
+    public void setEdmNum(int edmNum) {
+        this.edmNum = edmNum;
+    }
+
+    public Custom(String corpName, String domain, int corpId, Date firstOrderDate) {
+        this.corpName = corpName;
+        this.domain = domain;
+        this.corpId = corpId;
+        this.firstOrderDate = firstOrderDate;
+    }
+
+    public Custom(String corpName, String domain, int corpId, Date firstOrderDate,Order order) {
+        this.corpName = corpName;
+        this.domain = domain;
+        this.corpId = corpId;
+        this.firstOrderDate = firstOrderDate;
+        this.orderList.add(order);
+    }
 
     public Custom(String corpName, String domain, int corpId, Order order) {
         this.corpName = corpName;
         this.domain = domain;
         this.corpId = corpId;
         this.orderList.add(order);
+    }
+
+    public Date getFirstOrderDate() {
+        return firstOrderDate;
+    }
+
+    public void setFirstOrderDate(Date firstOrderDate) {
+        this.firstOrderDate = firstOrderDate;
     }
 
     public Custom(String corpName, String domain, int corpId, ArrayList<Order> orderList) {
