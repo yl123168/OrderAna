@@ -24,7 +24,6 @@ public class Main {
     public static void main(String[] args) throws IOException {
         //订单包含订单号，企业订单号，付款时间，产品类型，产品数量，购买月份，订单总价，订单客户名，订单客户序号，订单客户域名
         //客户包含：公司名、域名、企业序号、订单列表
-        System.out.println();
         ArrayList<Custom> customsList = new ArrayList<>();
 //        System.out.println("输入订单列表源文件路径");
 //        Scanner sc = new Scanner(System.in);
